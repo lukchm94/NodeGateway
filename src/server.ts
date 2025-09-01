@@ -6,6 +6,10 @@ import { App } from "./shared/server/app";
 import type { Route } from "./shared/server/route";
 import { Logger } from "./shared/utils/logger";
 
+/**
+ * The `bootstrap` function initializes a server application with defined routes and logging, starting
+ * the server on a specified port.
+ */
 async function bootstrap() {
   try {
     const appLogger = DIContainer.resolve<Logger>(
