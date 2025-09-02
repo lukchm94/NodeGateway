@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { Route } from "../server/route";
 import { Logger } from "../utils/logger";
+import { Route } from "./route.interface";
 
 /**
  * An abstract base class for all routers in the application.

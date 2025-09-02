@@ -1,9 +1,10 @@
+import { Router } from "express";
 import "reflect-metadata";
 import { DIContainer } from "./shared/DIcontainer/container";
 import { RegisteredServicesEnum } from "./shared/DIcontainer/registeredServicesEnum";
 import { RouterService } from "./shared/routers/router.service";
+import { RoutesEnum } from "./shared/routers/routes.enum";
 import { App } from "./shared/server/app";
-import type { Route } from "./shared/server/route";
 import { Logger } from "./shared/utils/logger";
 
 /**
@@ -19,7 +20,8 @@ async function bootstrap() {
       RegisteredServicesEnum.ROUTER_SERVICE
     );
 
-    const routes: Route[] = routerService.setupRouters();
+    const routes: Array<{ prefix: RoutesEnum; router: Router }> =
+      routerService.setupRouters();
     const port = process.env.PORT ? parseInt(process.env.PORT) : 4000;
 
     const app = new App(port, routes, appLogger);
