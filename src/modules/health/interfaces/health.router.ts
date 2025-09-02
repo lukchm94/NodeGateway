@@ -2,7 +2,6 @@ import { Router } from "express";
 import { inject, injectable } from "tsyringe";
 import { RegisteredServicesEnum } from "../../../shared/DIcontainer/registeredServicesEnum";
 import { BaseRouter } from "../../../shared/routers/baseRouter";
-import { Route } from "../../../shared/routers/route.interface";
 import { RoutesEnum } from "../../../shared/routers/routes.enum";
 import { Logger } from "../../../shared/utils/logger";
 import { HealthController } from "./health.controller";
@@ -27,10 +26,5 @@ export class HealthRouter extends BaseRouter {
 
     router.route(RoutesEnum.HOME).get(this.healthController.healthCheck);
     return router;
-  }
-
-  public getRoutes(): Route[] {
-    this.logger.info(`${this.logPrefix} Health check route registered`);
-    throw new Error("Method not implemented.");
   }
 }

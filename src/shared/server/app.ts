@@ -8,8 +8,8 @@ import express, {
   type Express,
 } from "express";
 import { RoutesEnum } from "../routers/routes.enum";
+import { ValidationError } from "../utils/error";
 import { Logger } from "../utils/logger";
-
 export class App {
   private get logPrefix(): string {
     return `[${this.constructor.name}]`;
@@ -37,7 +37,13 @@ export class App {
       (err: any, req: Request, res: Response, next: NextFunction) => {
         const errMsg = `${this.logPrefix} - ${req.url} Unhandled error: ${err}`;
         this.logger.error(errMsg);
-        res.status(HttpStatusCode.InternalServerError).json({ error: errMsg });
+        if (err instanceof ValidationError) {
+          res.status(HttpStatusCode.BadRequest).json({ error: err.message });
+        } else {
+          res
+            .status(HttpStatusCode.InternalServerError)
+            .json({ error: errMsg });
+        }
       }
     );
   }
