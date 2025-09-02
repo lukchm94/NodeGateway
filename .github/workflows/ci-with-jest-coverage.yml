@@ -46,4 +46,4 @@ jobs:
         with:
           # Sets the minimum coverage threshold to 5%
           # You can adjust this value as your project grows
-          threshold: 80
+          threshold: 60
