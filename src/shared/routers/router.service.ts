@@ -1,8 +1,10 @@
 import { inject, injectable } from "tsyringe";
 import { RegisteredServicesEnum } from "../DIcontainer/registeredServicesEnum";
-import { Route } from "../server/route";
 import { Logger } from "../utils/logger";
-import { HealthRouter } from "./health";
+// import { HealthRouter } from "./health";
+import { Router } from "express";
+import { HealthRouter } from "../../modules/health/interfaces/health.router";
+import { RoutesEnum } from "./routes.enum";
 
 @injectable()
 export class RouterService {
@@ -22,15 +24,10 @@ export class RouterService {
     );
   }
 
-  public setupRouters(): Route[] {
+  public setupRouters(): Array<{ prefix: RoutesEnum; router: Router }> {
     this.appLogger.info(`${this.logPrefix} Setting up routers`);
-    const routes: Route[] = [
-      ...this.healthRouter.getRoutes(),
-      // Add other routers here as needed
-    ];
-    this.appLogger.info(
-      `${this.logPrefix} Total routes registered: ${routes.length}`
-    );
-    return routes;
+    const healthRouter = this.healthRouter.createRouter();
+    this.appLogger.info(`${this.logPrefix} Routers setup complete`);
+    return [{ prefix: RoutesEnum.HEALTH_CHECK, router: healthRouter }];
   }
 }

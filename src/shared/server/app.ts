@@ -1,7 +1,14 @@
+import { HttpStatusCode } from "axios";
 import bodyParser from "body-parser";
-import express, { type Express } from "express";
+import express, {
+  NextFunction,
+  Request,
+  Response,
+  Router,
+  type Express,
+} from "express";
+import { RoutesEnum } from "../routers/routes.enum";
 import { Logger } from "../utils/logger";
-import type { Route } from "./route";
 
 export class App {
   private get logPrefix(): string {
@@ -11,7 +18,7 @@ export class App {
 
   constructor(
     private port: number,
-    private routes: any[],
+    private routers: Array<{ prefix: RoutesEnum; router: Router }>,
     private readonly logger: Logger
   ) {
     this.port = port ? port : 4000;
@@ -22,9 +29,17 @@ export class App {
   }
 
   private registerRoutes(): void {
-    this.routes.forEach((route: Route) => {
-      this.app[route.method](route.path, route.handler);
+    this.routers.forEach(({ prefix, router }) => {
+      this.app.use(prefix, router);
     });
+
+    this.app.use(
+      (err: any, req: Request, res: Response, next: NextFunction) => {
+        const errMsg = `${this.logPrefix} - ${req.url} Unhandled error: ${err}`;
+        this.logger.error(errMsg);
+        res.status(HttpStatusCode.InternalServerError).json({ error: errMsg });
+      }
+    );
   }
 
   public start(): void {
