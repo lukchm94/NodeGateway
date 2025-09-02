@@ -1,0 +1,98 @@
+import { HttpStatusCode } from "axios";
+import { NextFunction, Response } from "express";
+import Joi from "joi";
+import { inject, injectable } from "tsyringe";
+import { RegisteredServicesEnum } from "../../../shared/DIcontainer/registeredServicesEnum";
+import { HttpMethodEnum } from "../../../shared/types/http-methods";
+import { ValidationError } from "../../../shared/utils/error";
+import { BaseClass } from "../../../shared/utils/log-prefix.class";
+import { Logger } from "../../../shared/utils/logger";
+import { ProcessTransactionUseCase } from "../application/process-transaction-use-case/process-transaction.use-case";
+import { CURRENCY_TYPE } from "../domain/validation/currency";
+import { TRANSACTION_STATUS_TYPE } from "../domain/validation/status";
+import { RequestWithSafeFields } from "./request.interface";
+
+@injectable()
+export class TransactionController extends BaseClass {
+  constructor(
+    @inject(RegisteredServicesEnum.APP_LOGGER)
+    protected readonly appLogger: Logger,
+    @inject(RegisteredServicesEnum.PROCESS_TRANSACTION_USE_CASE)
+    private readonly processTransactionUseCase: ProcessTransactionUseCase
+  ) {
+    super(appLogger);
+  }
+  public processTransaction = async (
+    req: RequestWithSafeFields,
+    resp: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      this.appLogger.info(
+        `${this.logPrefix} - ${req.url} - Processing transaction: ${req.body}`
+      );
+      const input = req.safeFields!;
+      const result = await this.processTransactionUseCase.run(input);
+      resp.status(HttpStatusCode.Ok).send({ result });
+    } catch (error) {
+      this.appLogger.error(
+        `[${this.constructor.name}] Error processing health check request: ${error}`
+      );
+      next(error);
+    }
+  };
+
+  public validateTransaction = async (
+    req: RequestWithSafeFields,
+    resp: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const transaction = Joi.object({
+        id: Joi.number().required(),
+        amount: Joi.number().required(),
+        currency: Joi.string()
+          .valid(...Object.values(CURRENCY_TYPE))
+          .required(),
+        status: Joi.string()
+          .valid(...Object.values(TRANSACTION_STATUS_TYPE))
+          .required(),
+        originCreatedAt: Joi.date().required(),
+      });
+
+      const validBody = await transaction.validateAsync(req.body);
+
+      req.safeFields = {
+        ...req.safeFields,
+        id: validBody.id,
+        amount: validBody.amount,
+        currency: validBody.currency,
+        status: validBody.status,
+        originCreatedAt: validBody.originCreatedAt,
+      };
+      next();
+    } catch (err) {
+      if (err instanceof Error) {
+        next(new ValidationError(err));
+      }
+      next(err);
+    }
+  };
+
+  public get = async (
+    req: RequestWithSafeFields,
+    resp: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const msg = `${this.logPrefix} Testing transaction - ${HttpMethodEnum.GET} - ${req.baseUrl}`;
+      this.appLogger.info(msg);
+      resp.status(HttpStatusCode.Ok).send({ status: msg });
+    } catch (error) {
+      this.appLogger.error(
+        `${this.logPrefix} Error processing health check request: ${error}`
+      );
+      next(error);
+    }
+  };
+}

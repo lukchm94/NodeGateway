@@ -31,7 +31,6 @@ export abstract class BaseRouter {
    * This method must return an array of routes.
    * @returns {Route[]} An array of Route objects.
    */
-  public abstract getRoutes(): Route[];
 
   public abstract createRouter(): Router;
 }
