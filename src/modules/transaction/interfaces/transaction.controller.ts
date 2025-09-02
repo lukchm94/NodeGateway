@@ -32,7 +32,14 @@ export class TransactionController extends BaseClass {
         `${this.logPrefix} - ${req.url} - Processing transaction: ${req.body}`
       );
       const input = req.safeFields!;
-      const result = await this.processTransactionUseCase.run(input);
+      const webhookUrl = req.webhookUrl!;
+      this.appLogger.info(
+        `${this.logPrefix} - ${req.url} - Using webhook URL: ${webhookUrl}`
+      );
+      const result = await this.processTransactionUseCase.run(
+        input,
+        webhookUrl
+      );
       resp.status(HttpStatusCode.Ok).send({ result });
     } catch (error) {
       this.appLogger.error(
@@ -59,9 +66,23 @@ export class TransactionController extends BaseClass {
           .required(),
         originCreatedAt: Joi.date().required(),
       });
-
+      const headerSchema = Joi.object({
+        webhook: Joi.string()
+          .uri({ scheme: ["http", "https"] })
+          .required(),
+      }).unknown(true);
       const validBody = await transaction.validateAsync(req.body);
-
+      this.appLogger.info(
+        `${this.logPrefix} Validation successful for body: ${JSON.stringify(
+          validBody
+        )}`
+      );
+      const validHeader = await headerSchema.validateAsync(req.headers);
+      this.appLogger.info(
+        `${this.logPrefix} Validation successful for body: ${JSON.stringify(
+          validBody
+        )} and headers: ${JSON.stringify(validHeader)}`
+      );
       req.safeFields = {
         ...req.safeFields,
         id: validBody.id,
@@ -70,6 +91,7 @@ export class TransactionController extends BaseClass {
         status: validBody.status,
         originCreatedAt: validBody.originCreatedAt,
       };
+      req.webhookUrl = validHeader.webhook;
       next();
     } catch (err) {
       if (err instanceof Error) {

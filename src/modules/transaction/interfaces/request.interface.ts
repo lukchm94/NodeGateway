@@ -10,4 +10,5 @@ export interface SafeFields {
 
 export interface RequestWithSafeFields extends ExpressRequest {
   safeFields?: SafeFields;
+  webhookUrl?: string;
 }

@@ -6,7 +6,7 @@ import { Logger } from "../../utils/logger";
 import { WebhookMetaData } from "./webhook.interface";
 
 @injectable()
-export class TokenWalletServiceClient extends BaseClass {
+export class WebhookClient extends BaseClass {
   constructor(
     @inject(RegisteredServicesEnum.APP_LOGGER)
     protected readonly appLogger: Logger
@@ -16,10 +16,10 @@ export class TokenWalletServiceClient extends BaseClass {
 
   public async sendRequest(meta: WebhookMetaData): Promise<AxiosResponse> {
     this.appLogger.info(
-      `${this.logPrefix} Sending request to Token Wallet Service at ${meta.baseUrl}${meta.endpoint}`
+      `${this.logPrefix} Sending request to Token Wallet Service at ${meta.webhookUrl}`
     );
 
-    const resp = await axios.post(meta.baseUrl + meta.endpoint, meta.payload);
+    const resp = await axios.post(meta.webhookUrl, meta.payload);
 
     this.appLogger.info(
       `${this.logPrefix} Received response with status: ${resp.status}`

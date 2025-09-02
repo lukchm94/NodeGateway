@@ -10,7 +10,6 @@ export interface WebhookPayload {
 }
 
 export interface WebhookMetaData {
-  baseUrl: string;
-  endpoint: string;
+  webhookUrl: string;
   payload: WebhookPayload;
 }

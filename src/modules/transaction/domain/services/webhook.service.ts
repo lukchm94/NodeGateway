@@ -1,10 +1,10 @@
 import { AxiosResponse } from "axios";
 import { inject, injectable } from "tsyringe";
-import { TokenWalletServiceClient } from "../../../../shared/clients/tokenWalletService/token-wallet-service.client";
+import { WebhookClient } from "../../../../shared/clients/webhook/webhook.client";
 import {
   WebhookMetaData,
   WebhookPayload,
-} from "../../../../shared/clients/tokenWalletService/webhook.interface";
+} from "../../../../shared/clients/webhook/webhook.interface";
 import { RegisteredServicesEnum } from "../../../../shared/DIcontainer/registeredServicesEnum";
 import { BaseClass } from "../../../../shared/utils/log-prefix.class";
 import { Logger } from "../../../../shared/utils/logger";
@@ -15,8 +15,8 @@ export class WebhookService extends BaseClass {
   constructor(
     @inject(RegisteredServicesEnum.APP_LOGGER)
     protected readonly appLogger: Logger,
-    @inject(RegisteredServicesEnum.TOKEN_WALLET_SERVICE_CLIENT)
-    private readonly tokenWalletServiceClient: TokenWalletServiceClient
+    @inject(RegisteredServicesEnum.WEBHOOK_CLIENT)
+    private readonly webhookClient: WebhookClient
   ) {
     super(appLogger);
     this.appLogger.info(
@@ -25,7 +25,8 @@ export class WebhookService extends BaseClass {
   }
 
   public async sendTransactionWebhook(
-    transaction: Transaction
+    transaction: Transaction,
+    webhookUrl: string
   ): Promise<AxiosResponse> {
     this.appLogger.info(
       `${
@@ -38,13 +39,12 @@ export class WebhookService extends BaseClass {
     const payload: WebhookPayload = this.buildPayload(transaction);
 
     const webhookMeta: WebhookMetaData = {
-      baseUrl: process.env.TOKEN_WALLET_SERVICE_URL || "http://localhost:3000",
-      endpoint: process.env.WEBHOOK_URL || "/api/transaction/webhook",
+      webhookUrl,
       payload,
     };
 
     try {
-      const resp = await this.tokenWalletServiceClient.sendRequest(webhookMeta);
+      const resp = await this.webhookClient.sendRequest(webhookMeta);
       this.appLogger.info(
         `${this.logPrefix} Transaction webhook sent successfully`
       );

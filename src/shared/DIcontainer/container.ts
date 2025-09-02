@@ -6,7 +6,7 @@ import { TransactionService } from "../../modules/transaction/domain/services/tr
 import { WebhookService } from "../../modules/transaction/domain/services/webhook.service";
 import { TransactionController } from "../../modules/transaction/interfaces/transaction.controller";
 import { TransactionRouter } from "../../modules/transaction/interfaces/transaction.router";
-import { TokenWalletServiceClient } from "../clients/tokenWalletService/token-wallet-service.client";
+import { WebhookClient } from "../clients/webhook/webhook.client";
 import { RouterService } from "../routers/router.service";
 import { Logger } from "../utils/logger";
 import { RegisteredServicesEnum } from "./registeredServicesEnum";
@@ -17,12 +17,9 @@ container.register<Logger>(RegisteredServicesEnum.APP_LOGGER, {
 container.register<RouterService>(RegisteredServicesEnum.ROUTER_SERVICE, {
   useClass: RouterService,
 });
-container.register<TokenWalletServiceClient>(
-  RegisteredServicesEnum.TOKEN_WALLET_SERVICE_CLIENT,
-  {
-    useClass: TokenWalletServiceClient,
-  }
-);
+container.register<WebhookClient>(RegisteredServicesEnum.WEBHOOK_CLIENT, {
+  useClass: WebhookClient,
+});
 
 // Health module
 container.register<HealthRouter>(RegisteredServicesEnum.HEALTH_ROUTER, {

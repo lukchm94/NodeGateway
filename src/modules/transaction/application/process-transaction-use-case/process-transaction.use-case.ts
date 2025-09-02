@@ -20,12 +20,18 @@ export class ProcessTransactionUseCase extends BaseClass {
     super(appLogger);
   }
 
-  public async run(input: TransactionInput): Promise<AxiosResponse> {
+  public async run(
+    input: TransactionInput,
+    webhookUrl: string
+  ): Promise<AxiosResponse> {
     this.appLogger.info(
       `${this.logPrefix} processing ${JSON.stringify(input)}`
     );
     const transaction = this.transactionService.processTransaction(input);
-    const resp = await this.webhookService.sendTransactionWebhook(transaction);
+    const resp = await this.webhookService.sendTransactionWebhook(
+      transaction,
+      webhookUrl
+    );
     this.appLogger.info(
       `${this.logPrefix} received the ${resp.status}: ${resp.statusText}`
     );
