@@ -58,7 +58,7 @@ describe("WebhookService", () => {
       new Date()
     );
     const payload = (service as any).buildPayload(tx);
-    expect(payload.transactionId).toBe(1);
+    expect(payload.id).toBe(1);
     expect(payload.amount).toBe(100);
   });
 });

@@ -1,4 +1,3 @@
-import { AxiosResponse } from "axios";
 import { inject, injectable } from "tsyringe";
 import { RegisteredServicesEnum } from "../../../../shared/DIcontainer/registeredServicesEnum";
 import { BaseClass } from "../../../../shared/utils/log-prefix.class";
@@ -6,6 +5,7 @@ import { Logger } from "../../../../shared/utils/logger";
 import { TransactionService } from "../../domain/services/transaction.service";
 import { WebhookService } from "../../domain/services/webhook.service";
 import { TransactionInput } from "../input";
+import { GatewayOutput } from "../output";
 
 @injectable()
 export class ProcessTransactionUseCase extends BaseClass {
@@ -23,7 +23,7 @@ export class ProcessTransactionUseCase extends BaseClass {
   public async run(
     input: TransactionInput,
     webhookUrl: string
-  ): Promise<AxiosResponse> {
+  ): Promise<GatewayOutput> {
     this.appLogger.info(
       `${this.logPrefix} processing ${JSON.stringify(input)}`
     );
@@ -35,6 +35,13 @@ export class ProcessTransactionUseCase extends BaseClass {
     this.appLogger.info(
       `${this.logPrefix} received the ${resp.status}: ${resp.statusText}`
     );
-    return resp;
+    return {
+      status: resp.status,
+      statusText: resp.statusText,
+      data: {
+        transactionId: transaction.id,
+        transactionStatus: transaction.status,
+      },
+    };
   }
 }

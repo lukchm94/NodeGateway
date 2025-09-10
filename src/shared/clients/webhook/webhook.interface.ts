@@ -2,7 +2,7 @@ import { CurrencyEnum } from "../../../modules/transaction/domain/validation/cur
 import { TransactionStatusEnum } from "../../../modules/transaction/domain/validation/status";
 
 export interface WebhookPayload {
-  transactionId: number;
+  id: number;
   status: TransactionStatusEnum;
   amount: number;
   currency: CurrencyEnum;

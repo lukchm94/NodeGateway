@@ -59,7 +59,7 @@ export class WebhookService extends BaseClass {
 
   private buildPayload(transaction: Transaction): WebhookPayload {
     return {
-      transactionId: transaction.id,
+      id: transaction.id,
       amount: transaction.amount,
       currency: transaction.currency,
       status: transaction.status,

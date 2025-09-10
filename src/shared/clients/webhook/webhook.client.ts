@@ -1,4 +1,4 @@
-import axios, { AxiosResponse, HttpStatusCode } from "axios";
+import axios, { AxiosResponse } from "axios";
 import { inject, injectable } from "tsyringe";
 import { RegisteredServicesEnum } from "../../DIcontainer/registeredServicesEnum";
 import { BaseClass } from "../../utils/log-prefix.class";
@@ -19,17 +19,39 @@ export class WebhookClient extends BaseClass {
       `${this.logPrefix} Sending request to Token Wallet Service at ${meta.webhookUrl}`
     );
 
-    const resp = await axios.post(meta.webhookUrl, meta.payload);
+    try {
+      const resp = await axios.post(meta.webhookUrl, meta.payload);
 
-    this.appLogger.info(
-      `${this.logPrefix} Received response with status: ${resp.status}`
-    );
-
-    if (resp.status !== HttpStatusCode.Ok) {
-      throw new Error(
-        `${this.logPrefix} Failed to send webhook: ${resp.statusText}`
+      this.appLogger.info(
+        `${this.logPrefix} Received response with status: ${resp.status}`
       );
+
+      // Log the response body for debugging
+      this.appLogger.info(
+        `${this.logPrefix} Response body: ${JSON.stringify(resp.data)}`
+      );
+
+      return resp;
+    } catch (error: any) {
+      this.appLogger.error(
+        `${this.logPrefix} Error sending webhook request: ${error.message}`
+      );
+
+      // If it's an axios error with response, return the response
+      if (error.response) {
+        this.appLogger.info(
+          `${this.logPrefix} Received error response with status: ${error.response.status}`
+        );
+        this.appLogger.info(
+          `${this.logPrefix} Error response body: ${JSON.stringify(
+            error.response.data
+          )}`
+        );
+        return error.response;
+      }
+
+      // If it's a network error or other issue, re-throw
+      throw error;
     }
-    return resp;
   }
 }

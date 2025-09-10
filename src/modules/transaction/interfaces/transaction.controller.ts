@@ -7,6 +7,7 @@ import { HttpMethodEnum } from "../../../shared/types/http-methods";
 import { ValidationError } from "../../../shared/utils/error";
 import { BaseClass } from "../../../shared/utils/log-prefix.class";
 import { Logger } from "../../../shared/utils/logger";
+import { GatewayOutput } from "../application/output";
 import { ProcessTransactionUseCase } from "../application/process-transaction-use-case/process-transaction.use-case";
 import { CURRENCY_TYPE } from "../domain/validation/currency";
 import { TRANSACTION_STATUS_TYPE } from "../domain/validation/status";
@@ -29,22 +30,36 @@ export class TransactionController extends BaseClass {
   ): Promise<void> => {
     try {
       this.appLogger.info(
-        `${this.logPrefix} - ${req.url} - Processing transaction: ${req.body}`
+        `${this.logPrefix} - ${
+          req.webhookUrl
+        } - Processing transaction: ${JSON.stringify(req.safeFields, null, 2)}`
       );
       const input = req.safeFields!;
       const webhookUrl = req.webhookUrl!;
       this.appLogger.info(
         `${this.logPrefix} - ${req.url} - Using webhook URL: ${webhookUrl}`
       );
-      const result = await this.processTransactionUseCase.run(
+      const result: GatewayOutput = await this.processTransactionUseCase.run(
         input,
         webhookUrl
       );
-      resp.status(HttpStatusCode.Ok).send({ result });
+      this.appLogger.info(
+        `${this.logPrefix} - ${req.url} - Sending result: ${JSON.stringify(
+          result
+        )}`
+      );
+      resp.status(HttpStatusCode.Ok).send({
+        result,
+      });
     } catch (error) {
       this.appLogger.error(
-        `[${this.constructor.name}] Error processing health check request: ${error}`
+        `[${this.logPrefix}] Error processing health check request: ${
+          error instanceof Error ? error.message : String(error)
+        }`
       );
+      if (error instanceof Error && error.stack) {
+        this.appLogger.error(error.stack);
+      }
       next(error);
     }
   };
@@ -96,8 +111,9 @@ export class TransactionController extends BaseClass {
     } catch (err) {
       if (err instanceof Error) {
         next(new ValidationError(err));
+      } else {
+        next(err);
       }
-      next(err);
     }
   };
 
