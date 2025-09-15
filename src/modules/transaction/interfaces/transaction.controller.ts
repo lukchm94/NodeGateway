@@ -2,7 +2,6 @@ import { HttpStatusCode } from "axios";
 import { NextFunction, Response } from "express";
 import Joi from "joi";
 import { inject, injectable } from "tsyringe";
-import { RabbitClient } from "../../../shared/clients/rabbitMQ/rabbit.client";
 import { RegisteredServicesEnum } from "../../../shared/DIcontainer/registeredServicesEnum";
 import { HttpMethodEnum } from "../../../shared/types/http-methods";
 import { ValidationError } from "../../../shared/utils/error";
@@ -10,10 +9,10 @@ import { BaseClass } from "../../../shared/utils/log-prefix.class";
 import { Logger } from "../../../shared/utils/logger";
 import { GatewayOutput } from "../application/output";
 import { ProcessTransactionUseCase } from "../application/process-transaction-use-case/process-transaction.use-case";
+import { ProcessTrxEventUseCase } from "../application/process-trx-event.use-case/process-trx-event.use-case";
 import { CURRENCY_TYPE } from "../domain/validation/currency";
 import { TRANSACTION_STATUS_TYPE } from "../domain/validation/status";
 import { RequestWithSafeFields } from "./request.interface";
-
 @injectable()
 export class TransactionController extends BaseClass {
   constructor(
@@ -21,8 +20,8 @@ export class TransactionController extends BaseClass {
     protected readonly appLogger: Logger,
     @inject(RegisteredServicesEnum.PROCESS_TRANSACTION_USE_CASE)
     private readonly processTransactionUseCase: ProcessTransactionUseCase,
-    @inject(RegisteredServicesEnum.RABBIT_CLIENT)
-    private readonly rabbitClient: RabbitClient
+    @inject(RegisteredServicesEnum.PROCESS_TRX_EVENT_USE_CASE)
+    private readonly processTrxEventUseCase: ProcessTrxEventUseCase
   ) {
     super(appLogger);
   }
@@ -137,20 +136,27 @@ export class TransactionController extends BaseClass {
     }
   };
 
+  // TODO remove the route after the holistic migration to RabbitMQ
   public postToQueue = async (
-    req: Request,
+    req: RequestWithSafeFields,
     resp: Response,
     next: NextFunction
   ): Promise<void> => {
     try {
-      const msg = `${this.logPrefix} Testing transaction - ${HttpMethodEnum.POST} - ${req.url}`;
+      const input = req.safeFields!;
+      const msg = `${this.logPrefix} Processing transaction - ${input}`;
       this.appLogger.info(msg);
-      await this.rabbitClient.connect();
-      this.appLogger.info(`${this.logPrefix} RabbitMQ client connected.`);
-      this.rabbitClient.sendToQueue(msg);
-
-      this.appLogger.info(`${this.logPrefix} Message sent to RabbitMQ: ${msg}`);
-      resp.status(HttpStatusCode.Ok).send({ status: msg });
+      const transaction = await this.processTrxEventUseCase.run(input);
+      this.appLogger.info(
+        `${
+          this.logPrefix
+        } ProcessTrxEventUseCase executed successfully for input: ${JSON.stringify(
+          transaction
+        )}`
+      );
+      resp
+        .status(HttpStatusCode.Ok)
+        .send({ transaction: JSON.stringify(transaction) });
     } catch (error) {
       this.appLogger.error(
         `${this.logPrefix} Error processing send to Rabbit request: ${

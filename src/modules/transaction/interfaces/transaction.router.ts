@@ -2,10 +2,10 @@ import { Router } from "express";
 import { inject, injectable } from "tsyringe";
 import { RegisteredServicesEnum } from "../../../shared/DIcontainer/registeredServicesEnum";
 import { BaseRouter } from "../../../shared/routers/baseRouter";
-import { catchAsync } from "../../../shared/routers/catchAsync";
 import { RoutesEnum } from "../../../shared/routers/routes.enum";
 import { Logger } from "../../../shared/utils/logger";
 import { TransactionController } from "./transaction.controller";
+
 @injectable()
 export class TransactionRouter extends BaseRouter {
   constructor(
@@ -27,9 +27,13 @@ export class TransactionRouter extends BaseRouter {
         this.transactionController.validateTransaction,
         this.transactionController.processTransaction
       );
+    // TODO remove the route after the holistic migration to RabbitMQ
     router
       .route(RoutesEnum.QUEUE)
-      .post(catchAsync(this.transactionController.postToQueue));
+      .post(
+        this.transactionController.validateTransaction,
+        this.transactionController.postToQueue
+      );
 
     return router;
   }
