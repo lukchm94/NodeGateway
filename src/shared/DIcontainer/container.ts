@@ -6,10 +6,12 @@ import { TransactionService } from "../../modules/transaction/domain/services/tr
 import { WebhookService } from "../../modules/transaction/domain/services/webhook.service";
 import { TransactionController } from "../../modules/transaction/interfaces/transaction.controller";
 import { TransactionRouter } from "../../modules/transaction/interfaces/transaction.router";
+import { RabbitClient } from "../clients/rabbitMQ/rabbit.client";
 import { WebhookClient } from "../clients/webhook/webhook.client";
 import { RouterService } from "../routers/router.service";
 import { Logger } from "../utils/logger";
 import { RegisteredServicesEnum } from "./registeredServicesEnum";
+
 // Utilities
 container.register<Logger>(RegisteredServicesEnum.APP_LOGGER, {
   useClass: Logger,
@@ -53,4 +55,10 @@ container.register<TransactionRouter>(
   RegisteredServicesEnum.TRANSACTION_ROUTER,
   { useClass: TransactionRouter }
 );
+
+// RabbitMQ client
+container.register<RabbitClient>(RegisteredServicesEnum.RABBIT_CLIENT, {
+  useClass: RabbitClient,
+});
+
 export const DIContainer = container;

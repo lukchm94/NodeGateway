@@ -18,4 +18,7 @@ export enum RegisteredServicesEnum {
   TRANSACTION_CONTROLLER = "TransactionController",
   TRANSACTION_SERVICE = "TransactionService",
   PROCESS_TRANSACTION_USE_CASE = "ProcessTransactionUseCase",
+
+  // RabbitMQ client
+  RABBIT_CLIENT = "RabbitClient",
 }

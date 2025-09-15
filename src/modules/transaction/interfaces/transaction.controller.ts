@@ -2,6 +2,7 @@ import { HttpStatusCode } from "axios";
 import { NextFunction, Response } from "express";
 import Joi from "joi";
 import { inject, injectable } from "tsyringe";
+import { RabbitClient } from "../../../shared/clients/rabbitMQ/rabbit.client";
 import { RegisteredServicesEnum } from "../../../shared/DIcontainer/registeredServicesEnum";
 import { HttpMethodEnum } from "../../../shared/types/http-methods";
 import { ValidationError } from "../../../shared/utils/error";
@@ -19,7 +20,9 @@ export class TransactionController extends BaseClass {
     @inject(RegisteredServicesEnum.APP_LOGGER)
     protected readonly appLogger: Logger,
     @inject(RegisteredServicesEnum.PROCESS_TRANSACTION_USE_CASE)
-    private readonly processTransactionUseCase: ProcessTransactionUseCase
+    private readonly processTransactionUseCase: ProcessTransactionUseCase,
+    @inject(RegisteredServicesEnum.RABBIT_CLIENT)
+    private readonly rabbitClient: RabbitClient
   ) {
     super(appLogger);
   }
@@ -130,6 +133,33 @@ export class TransactionController extends BaseClass {
       this.appLogger.error(
         `${this.logPrefix} Error processing health check request: ${error}`
       );
+      next(error);
+    }
+  };
+
+  public postToQueue = async (
+    req: Request,
+    resp: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const msg = `${this.logPrefix} Testing transaction - ${HttpMethodEnum.POST} - ${req.url}`;
+      this.appLogger.info(msg);
+      await this.rabbitClient.connect();
+      this.appLogger.info(`${this.logPrefix} RabbitMQ client connected.`);
+      this.rabbitClient.sendToQueue(msg);
+
+      this.appLogger.info(`${this.logPrefix} Message sent to RabbitMQ: ${msg}`);
+      resp.status(HttpStatusCode.Ok).send({ status: msg });
+    } catch (error) {
+      this.appLogger.error(
+        `${this.logPrefix} Error processing send to Rabbit request: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
+      if (error instanceof Error && error.stack) {
+        this.appLogger.error(error.stack);
+      }
       next(error);
     }
   };

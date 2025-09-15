@@ -1,3 +1,4 @@
+import "dotenv/config";
 import { Router } from "express";
 import "reflect-metadata";
 import { DIContainer } from "./shared/DIcontainer/container";
