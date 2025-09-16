@@ -1,12 +1,13 @@
+import "dotenv/config";
 import { Router } from "express";
 import "reflect-metadata";
+import { RabbitService } from "./shared/clients/rabbitMQ/rabbit.service";
 import { DIContainer } from "./shared/DIcontainer/container";
 import { RegisteredServicesEnum } from "./shared/DIcontainer/registeredServicesEnum";
 import { RouterService } from "./shared/routers/router.service";
 import { RoutesEnum } from "./shared/routers/routes.enum";
 import { App } from "./shared/server/app";
 import { Logger } from "./shared/utils/logger";
-
 /**
  * The `bootstrap` function initializes a server application with defined routes and logging, starting
  * the server on a specified port.
@@ -19,6 +20,11 @@ async function bootstrap() {
     const routerService = DIContainer.resolve<RouterService>(
       RegisteredServicesEnum.ROUTER_SERVICE
     );
+    const rabbitService = DIContainer.resolve<RabbitService>(
+      RegisteredServicesEnum.RABBIT_SERVICE
+    );
+    await rabbitService.start();
+    appLogger.info(`[Server] RabbitMQ service is active ✅`);
 
     const routes: Array<{ prefix: RoutesEnum; router: Router }> =
       routerService.setupRouters();

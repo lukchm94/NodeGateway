@@ -18,6 +18,9 @@ export class ProcessTransactionUseCase extends BaseClass {
     private readonly transactionService: TransactionService
   ) {
     super(appLogger);
+    this.appLogger.info(
+      `${this.logPrefix} ${RegisteredServicesEnum.PROCESS_TRANSACTION_USE_CASE} initialized`
+    );
   }
 
   public async run(

@@ -9,6 +9,7 @@ import { BaseClass } from "../../../shared/utils/log-prefix.class";
 import { Logger } from "../../../shared/utils/logger";
 import { GatewayOutput } from "../application/output";
 import { ProcessTransactionUseCase } from "../application/process-transaction-use-case/process-transaction.use-case";
+import { ProcessTrxEventUseCase } from "../application/process-trx-event.use-case/process-trx-event.use-case";
 import { CURRENCY_TYPE } from "../domain/validation/currency";
 import { TRANSACTION_STATUS_TYPE } from "../domain/validation/status";
 import { RequestWithSafeFields } from "./request.interface";
@@ -19,7 +20,9 @@ export class TransactionController extends BaseClass {
     @inject(RegisteredServicesEnum.APP_LOGGER)
     protected readonly appLogger: Logger,
     @inject(RegisteredServicesEnum.PROCESS_TRANSACTION_USE_CASE)
-    private readonly processTransactionUseCase: ProcessTransactionUseCase
+    private readonly processTransactionUseCase: ProcessTransactionUseCase,
+    @inject(RegisteredServicesEnum.PROCESS_TRX_EVENT_USE_CASE)
+    private readonly processTrxEventUseCase: ProcessTrxEventUseCase
   ) {
     super(appLogger);
   }

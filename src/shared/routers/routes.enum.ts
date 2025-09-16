@@ -3,4 +3,5 @@ export enum RoutesEnum {
   API = "/api",
   HEALTH_CHECK = `${RoutesEnum.API}/health`,
   TRANSACTION = `${RoutesEnum.API}/transaction`,
+  QUEUE = "/queue",
 }

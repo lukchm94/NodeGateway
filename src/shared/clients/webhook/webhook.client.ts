@@ -26,7 +26,6 @@ export class WebhookClient extends BaseClass {
         `${this.logPrefix} Received response with status: ${resp.status}`
       );
 
-      // Log the response body for debugging
       this.appLogger.info(
         `${this.logPrefix} Response body: ${JSON.stringify(resp.data)}`
       );
@@ -37,7 +36,6 @@ export class WebhookClient extends BaseClass {
         `${this.logPrefix} Error sending webhook request: ${error.message}`
       );
 
-      // If it's an axios error with response, return the response
       if (error.response) {
         this.appLogger.info(
           `${this.logPrefix} Received error response with status: ${error.response.status}`
@@ -50,7 +48,6 @@ export class WebhookClient extends BaseClass {
         return error.response;
       }
 
-      // If it's a network error or other issue, re-throw
       throw error;
     }
   }

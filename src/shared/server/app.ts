@@ -10,6 +10,7 @@ import express, {
 import { RoutesEnum } from "../routers/routes.enum";
 import { ValidationError } from "../utils/error";
 import { Logger } from "../utils/logger";
+
 export class App {
   private get logPrefix(): string {
     return `[${this.constructor.name}]`;
