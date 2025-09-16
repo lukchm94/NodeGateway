@@ -1,19 +1,21 @@
 import * as amqp from "amqplib";
 import { Channel, ChannelModel } from "amqplib";
-import { inject, injectable } from "tsyringe";
+import { inject, injectable, singleton } from "tsyringe";
 import { Transaction } from "../../../modules/transaction/domain/transaction.entity";
 import { RegisteredServicesEnum } from "../../DIcontainer/registeredServicesEnum";
 import { BaseClass } from "../../utils/log-prefix.class";
 import { Logger } from "../../utils/logger";
 import { TransactionResponsePayload } from "./output";
 
+@singleton()
 @injectable()
 export class RabbitClient extends BaseClass {
   private connection: ChannelModel | null = null;
   private channel: Channel | null = null;
   private readonly rabbitUrl: string | null = null;
-  private readonly queueName: string | null = null;
-  private readonly requestQueueName: string | null = null;
+  public readonly queueName: string | null = null;
+  public readonly requestQueueName: string | null = null;
+  public isConnected = false;
 
   constructor(
     @inject(RegisteredServicesEnum.APP_LOGGER)
@@ -28,7 +30,13 @@ export class RabbitClient extends BaseClass {
     );
   }
 
-  public async connect(): Promise<void> {
+  public async connect(): Promise<boolean> {
+    if (this.isConnected) {
+      this.appLogger.info(
+        `${this.logPrefix} RabbitMQ client already connected.`
+      );
+      return false;
+    }
     try {
       if (
         this.rabbitUrl === null ||
@@ -37,13 +45,15 @@ export class RabbitClient extends BaseClass {
       ) {
         throw new Error("RabbitMQ URL or Queue Name is not set");
       }
+
+      // Await the connection
       this.connection = await amqp.connect(this.rabbitUrl);
       if (!this.connection) {
         throw new Error("Failed to create RabbitMQ connection");
       }
 
+      // Await the channel creation
       this.channel = await this.connection.createChannel();
-
       if (!this.channel) {
         throw new Error("Failed to create RabbitMQ channel");
       }
@@ -51,16 +61,33 @@ export class RabbitClient extends BaseClass {
       await this.channel.assertQueue(this.queueName, { durable: true });
       await this.channel.assertQueue(this.requestQueueName, { durable: true });
 
+      this.isConnected = true;
       this.setupErrorListeners();
+
+      this.appLogger.info(
+        `${this.logPrefix} RabbitMQ client successfully connected and consuming ✅.`
+      );
+      return true;
     } catch (error) {
       this.appLogger.error(
         `${this.logPrefix} Failed to connect to RabbitMQ: ${error}`
       );
       setTimeout(() => this.connect(), 5000);
+      return false;
     }
   }
 
-  public sendToQueue(transaction: Transaction): void {
+  public async sendToQueue(transaction: Transaction): Promise<void> {
+    if (!this.isConnected) {
+      this.appLogger.error(
+        `${this.logPrefix} RabbitMQ channel is not connected: ${this.isConnected}`
+      );
+      const connected = await this.connect();
+      if (connected) {
+        this.appLogger.info(`${connected}`);
+      }
+      this.isConnected = connected;
+    }
     if (!this.channel || !this.queueName) {
       throw new Error("RabbitMQ channel is not initialized");
     }
@@ -77,7 +104,7 @@ export class RabbitClient extends BaseClass {
     );
   }
 
-  public async consumeFromQueue(handler: (msg: any) => void): Promise<void> {
+  public consumeFromQueue(handler: (msg: any) => void): void {
     try {
       if (!this.channel || !this.requestQueueName) {
         throw new Error("RabbitMQ channel is not initialized");
@@ -92,12 +119,10 @@ export class RabbitClient extends BaseClass {
         (msg) => {
           if (msg !== null) {
             const content = msg.content.toString();
-            this.appLogger.info(
-              `${this.logPrefix} Message received from queue: ${this.requestQueueName} - ${content}`
-            );
-            const payload: TransactionResponsePayload = JSON.parse(content);
-            this.channel!.ack(msg);
+            const payload = JSON.parse(content);
+
             handler(payload);
+            this.channel!.ack(msg);
           }
         },
         { noAck: false }

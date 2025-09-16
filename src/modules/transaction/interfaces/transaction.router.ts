@@ -27,14 +27,6 @@ export class TransactionRouter extends BaseRouter {
         this.transactionController.validateTransaction,
         this.transactionController.processTransaction
       );
-    // TODO remove the route after the holistic migration to RabbitMQ
-    router
-      .route(RoutesEnum.QUEUE)
-      .post(
-        this.transactionController.validateTransaction,
-        this.transactionController.postToQueue
-      );
-
     return router;
   }
 }

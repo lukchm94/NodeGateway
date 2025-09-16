@@ -13,6 +13,7 @@ import { ProcessTrxEventUseCase } from "../application/process-trx-event.use-cas
 import { CURRENCY_TYPE } from "../domain/validation/currency";
 import { TRANSACTION_STATUS_TYPE } from "../domain/validation/status";
 import { RequestWithSafeFields } from "./request.interface";
+
 @injectable()
 export class TransactionController extends BaseClass {
   constructor(
@@ -132,40 +133,6 @@ export class TransactionController extends BaseClass {
       this.appLogger.error(
         `${this.logPrefix} Error processing health check request: ${error}`
       );
-      next(error);
-    }
-  };
-
-  // TODO remove the route after the holistic migration to RabbitMQ
-  public postToQueue = async (
-    req: RequestWithSafeFields,
-    resp: Response,
-    next: NextFunction
-  ): Promise<void> => {
-    try {
-      const input = req.safeFields!;
-      const msg = `${this.logPrefix} Processing transaction - ${input}`;
-      this.appLogger.info(msg);
-      const transaction = await this.processTrxEventUseCase.run(input);
-      this.appLogger.info(
-        `${
-          this.logPrefix
-        } ProcessTrxEventUseCase executed successfully for input: ${JSON.stringify(
-          transaction
-        )}`
-      );
-      resp
-        .status(HttpStatusCode.Ok)
-        .send({ transaction: JSON.stringify(transaction) });
-    } catch (error) {
-      this.appLogger.error(
-        `${this.logPrefix} Error processing send to Rabbit request: ${
-          error instanceof Error ? error.message : String(error)
-        }`
-      );
-      if (error instanceof Error && error.stack) {
-        this.appLogger.error(error.stack);
-      }
       next(error);
     }
   };
